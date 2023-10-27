@@ -9,7 +9,7 @@ Any author credentials belong to the [Ratatui team](https://github.com/ratatui-o
 Add the dependency to the `Cargo.toml`:
 
 ```toml
-ratatui-template = "0.1.0"
+ratatui-template = "0.1.1"
 ```
 
 And then simply include it into your Rust TUI app:

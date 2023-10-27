@@ -1,6 +1,6 @@
 [package]
 name = "ratatui-template"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Base TUI struct with backend in ratatui; copied from Ratatui Book: https://ratatui.rs/how-to/develop-apps/abstract-terminal-and-event-handler.html"
 rust-version = "1.73"
