@@ -1,0 +1,103 @@
+name: release
+on:
+  workflow_dispatch:
+    inputs:
+      updateKind:
+        description: "Kind of version increment"
+        required: false
+        default: "patch"
+        type: choice
+        options:
+          - "patch"
+          - "minor"
+          - "major"
+      branch:
+        description: "Branch to release from"
+        type: string
+        required: false
+        default: main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout
+        name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: "${{ github.event.inputs.branch }}"
+
+      - id: test
+        name: "Pre-release build"
+        run: cargo build
+
+      - id: publish-dry-run
+        name: "Pre-publish check"
+        run: cargo publish --dry-run
+
+      - id: configure-git
+        name: "Configure git"
+        run: |
+          git config user.name release-chore
+          git config user.email release-chore@gh.io
+
+      - id: update-version
+        name: "Update package version"
+        env:
+          UPDATE_KIND: "${{ github.event.inputs.updateKind }}"
+        run: |
+          CURRENT=$(cat Cargo.toml | grep "^version" | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+")
+          
+          echo "> Current version: $CURRENT"
+          
+          # compute new version
+          MAJOR=$(echo "$CURRENT" | grep -o "^[0-9]")
+          MINOR=$(echo "$CURRENT" | grep -o "\.[0-9]\." | tr -d '.')
+          PATCH=$(echo "$CURRENT" | grep -o "[0-9]$")
+          
+          echo "> Update kind: $UPDATE_KIND"
+          
+          case $UPDATE_KIND in
+            "patch")
+              PATCH=$(($PATCH + 1))
+            ;;
+          
+            "minor")
+              MINOR=$(($MINOR + 1))
+            ;;
+          
+            "major")
+              MAJOR=$(($MAJOR + 1))
+            ;;
+          esac
+          
+          NEW="$MAJOR.$MINOR.$PATCH"
+          
+          echo "> New version: $NEW"
+          
+          # update Cargo.toml
+          sed -i "s/^version = \"$CURRENT\"/version = \"$NEW\"/g" Cargo.toml
+          
+          # update in README.md
+          sed -i "s/ratatui-template = \"$CURRENT\"/ratatui-template = \"$NEW\"/g" README.md
+          
+          git add .
+          git commit -m "version update: $CURRENT > $NEW"
+          git push
+
+          git tag -a "$NEW" -m "version update: $CURRENT > $NEW"
+          git push --tags
+
+      - id: checkout-tag
+        name: "Tag checkout"
+        run: |
+          VERSION=$(cat Cargo.toml | grep "^version" | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+")
+          git checkout tags/$VERSION
+
+      - id: publish
+        name: "Publish crate"
+        env:
+          CARGO_TOKEN: "${{ secrets.CRATES_IO_TOKEN }}"
+        run: |
+          cargo login $CARGO_TOKEN
+          cargo publish

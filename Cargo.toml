@@ -1,0 +1,20 @@
+[package]
+name = "ratatui-template"
+version = "0.1.0"
+edition = "2021"
+description = "Base TUI struct with backend in ratatui; copied from Ratatui Book: https://ratatui.rs/how-to/develop-apps/abstract-terminal-and-event-handler.html"
+rust-version = "1.73"
+readme = "README.md"
+license = "MIT"
+keywords = ["ratatui", "tui", "terminal"]
+homepage = "https://github.com/artkonr/ratatui-template"
+
+
+[dependencies]
+ratatui = "0.24.0"
+crossterm = { version = "0.27.0", features = ["event-stream"] }
+color-eyre = "0.6.2"
+tokio = { version = "1.33.0", features = ["full"] }
+tokio-util = "0.7.10"
+futures = "0.3.28"
+signal-hook = "0.3.17"
